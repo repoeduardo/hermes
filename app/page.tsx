@@ -5,5 +5,5 @@ export default function Home() {
     <React.Fragment>
       <h1>Olá mundo</h1>
     </React.Fragment>
-  )
+  );
 }
