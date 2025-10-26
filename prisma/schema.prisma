@@ -1,0 +1,267 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ===== Enums =====
+
+enum TamanhoProduto {
+  pequeno
+  medio
+  grande
+}
+
+enum PlataformaVenda {
+  local
+  online
+}
+
+enum MetodoEntrega {
+  correios
+  entregador_parceiro
+}
+
+enum CategoriaDespesa {
+  fixa
+  operacional
+  administrativa
+  inesperada
+}
+
+enum MetodoPagamento {
+  ted
+  dinheiro
+  credito
+  pix
+  criptomoeda
+}
+
+enum Role {
+  admin
+  visitante
+}
+
+enum StatusVenda {
+  pendente
+  confirmada
+  processando
+  enviada
+  entregue
+  cancelada
+}
+
+enum StatusReembolso {
+  solicitado
+  aprovado
+  processado
+  recusado
+}
+
+// ===== Modelos =====
+
+model Organizacao {
+  id            String       @id @default(uuid())
+  nome          String
+  cnpj          String?
+  descricao     String?
+  data_criacao  DateTime
+  ativo         Boolean      @default(true)
+  created_at    DateTime     @default(now())
+  updated_at    DateTime     @updatedAt
+  deleted_at    DateTime?
+
+  usuarios      Usuario[]
+  fornecedores  Fornecedor[]
+  produtos      Produto[]
+  transacoes    TransacaoVenda[]
+  reembolsos    TransacaoReembolso[]
+  despesas      Despesa[]
+
+  @@index([nome])
+  @@index([data_criacao])
+}
+
+model Usuario {
+  id             String       @id @default(uuid())
+  nome           String
+  sobrenome      String
+  email          String       @unique
+  senha          String
+  reset_token    String?
+  reset_token_expira_em DateTime?
+  cargo          Role         @default(visitante)
+  id_organizacao String
+  created_at     DateTime     @default(now())
+  updated_at     DateTime     @updatedAt
+  deleted_at     DateTime?
+
+  organizacao    Organizacao  @relation(fields: [id_organizacao], references: [id])
+  transacoes     TransacaoVenda[]
+  reembolsos     TransacaoReembolso[]
+  despesas       Despesa[]
+  historico_precos HistoricoPreco[]
+
+  @@index([id_organizacao])
+  @@index([email])
+}
+
+model Fornecedor {
+  id             String      @id @default(uuid())
+  id_organizacao String
+  nome           String
+  contato        String?
+  created_at     DateTime    @default(now())
+  updated_at     DateTime    @updatedAt
+  deleted_at     DateTime?
+
+  organizacao    Organizacao @relation(fields: [id_organizacao], references: [id])
+  produtos       Produto[]
+
+  @@index([id_organizacao])
+  @@index([nome])
+}
+
+model Produto {
+  id                 String       @id @default(uuid())
+  id_organizacao     String
+  id_fornecedor      String?
+  nome               String
+  descricao          String
+  custo              Decimal      @db.Decimal(10,2)
+  preco              Decimal      @db.Decimal(10,2)
+  tamanho            TamanhoProduto
+  quantidade_estoque Int
+  created_at         DateTime     @default(now())
+  updated_at         DateTime     @updatedAt
+  deleted_at         DateTime?
+
+  organizacao        Organizacao  @relation(fields: [id_organizacao], references: [id])
+  fornecedor         Fornecedor?  @relation(fields: [id_fornecedor], references: [id])
+  itens_venda        ItemVenda[]
+  historico_precos   HistoricoPreco[]
+
+  @@index([id_organizacao])
+  @@index([nome])
+}
+
+model TransacaoVenda {
+  id               String       @id @default(uuid())
+  id_organizacao   String
+  data             DateTime
+  plataforma       PlataformaVenda
+  metodo_entrega   MetodoEntrega?
+  taxa_entrega     Decimal?     @db.Decimal(10,2)
+  taxa_extra       Decimal?     @db.Decimal(10,2)
+  desconto         Decimal?     @db.Decimal(10,2)
+  valor_total      Decimal      @db.Decimal(10,2)
+  observacao       String?
+  status           StatusVenda  @default(pendente)
+  id_usuario       String
+  created_at       DateTime     @default(now())
+  updated_at       DateTime     @updatedAt
+  deleted_at       DateTime?
+
+  organizacao      Organizacao  @relation(fields: [id_organizacao], references: [id])
+  usuario          Usuario      @relation(fields: [id_usuario], references: [id])
+  itens            ItemVenda[]
+
+  @@index([id_organizacao])
+  @@index([id_usuario])
+  @@index([data])
+}
+
+model ItemVenda {
+  id             String          @id @default(uuid())
+  id_transacao   String
+  id_produto     String
+  preco_produto  Decimal          @db.Decimal(10,2)
+  quantidade     Int
+  subtotal       Decimal          @db.Decimal(10,2)
+  created_at     DateTime         @default(now())
+  updated_at     DateTime         @updatedAt
+  deleted_at     DateTime?
+
+  transacao      TransacaoVenda   @relation(fields: [id_transacao], references: [id])
+  produto        Produto          @relation(fields: [id_produto], references: [id])
+  reembolsos     TransacaoReembolso[]
+
+  @@unique([id_transacao, id_produto])
+  @@index([id_transacao])
+  @@index([id_produto])
+}
+
+model TransacaoReembolso {
+  id                     String           @id @default(uuid())
+  id_organizacao         String
+  id_item_venda          String
+  preco_item             Decimal          @db.Decimal(10,2)
+  quantidade_reembolsada Int
+  data                   DateTime
+  motivo                 String
+  status                 StatusReembolso  @default(solicitado)
+  aprovado_por           String?
+  data_aprovacao         DateTime?
+  id_usuario             String
+  created_at             DateTime         @default(now())
+  updated_at             DateTime         @updatedAt
+  deleted_at             DateTime?
+
+  organizacao            Organizacao      @relation(fields: [id_organizacao], references: [id])
+  item_venda             ItemVenda        @relation(fields: [id_item_venda], references: [id])
+  usuario                Usuario          @relation(fields: [id_usuario], references: [id])
+
+  @@index([id_organizacao])
+  @@index([id_item_venda])
+  @@index([id_usuario])
+  @@index([status])
+}
+
+model Despesa {
+  id               String            @id @default(uuid())
+  id_organizacao   String
+  custo            Decimal           @db.Decimal(10,2)
+  categoria        CategoriaDespesa
+  metodo_pagamento MetodoPagamento
+  observacao       String?
+  data             DateTime
+  id_usuario       String
+  created_at       DateTime          @default(now())
+  updated_at       DateTime          @updatedAt
+  deleted_at       DateTime?
+
+  organizacao      Organizacao       @relation(fields: [id_organizacao], references: [id])
+  usuario          Usuario           @relation(fields: [id_usuario], references: [id])
+
+  @@index([id_organizacao])
+  @@index([id_usuario])
+  @@index([data])
+}
+
+model HistoricoPreco {
+  id             String   @id @default(uuid())
+  id_produto     String
+  preco_anterior Decimal  @db.Decimal(10,2)
+  preco_novo     Decimal  @db.Decimal(10,2)
+  custo_anterior Decimal  @db.Decimal(10,2)
+  custo_novo     Decimal  @db.Decimal(10,2)
+  data_alteracao DateTime @default(now())
+  id_usuario     String
+
+  produto        Produto  @relation(fields: [id_produto], references: [id])
+  usuario        Usuario  @relation(fields: [id_usuario], references: [id])
+
+  @@index([id_produto])
+  @@index([id_usuario])
+}
+
