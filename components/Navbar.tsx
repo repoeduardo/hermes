@@ -8,53 +8,73 @@ import {
   NavigationMenuTrigger,
   NavigationMenuViewport,
 } from "@/components/ui/navigation-menu";
+import { Toggle } from "@/components/ui/toggle";
+import {
+  House,
+  PackageSearch,
+  Handshake,
+  Users,
+  ChartSpline,
+  TrendingDown,
+  Settings,
+  ShoppingCart,
+} from "lucide-react";
+import { ModeToggle } from "./ModeToogle";
 
 export function Navbar() {
   return (
-    <NavigationMenu>
+    <NavigationMenu className="fixed top-0 right-0 left-0 z-50 px-4 py-2 flex items-center justify-between border-b w-full">
       <NavigationMenuList>
         <NavigationMenuItem>
-          <NavigationMenuLink asChild>
+          <Toggle>
+            <House />
             <a href="/">Dashboard</a>
-          </NavigationMenuLink>
+          </Toggle>
         </NavigationMenuItem>
         <NavigationMenuItem>
-          <NavigationMenuLink asChild>
+          <Toggle>
+            <PackageSearch />
             <a href="/produtos">Produtos</a>
-          </NavigationMenuLink>
+          </Toggle>
         </NavigationMenuItem>
         <NavigationMenuItem>
-          <NavigationMenuLink asChild>
+          <Toggle>
+            <Handshake />
             <a href="/fornecedores">Fornecedores</a>
-          </NavigationMenuLink>
+          </Toggle>
         </NavigationMenuItem>
         <NavigationMenuItem>
-          <NavigationMenuLink asChild>
+          <Toggle>
+            <ShoppingCart />
             <a href="/vendas">Vendas</a>
-          </NavigationMenuLink>
+          </Toggle>
         </NavigationMenuItem>
         <NavigationMenuItem>
-          <NavigationMenuLink asChild>
+          <Toggle>
+            <TrendingDown />
             <a href="/despesas">Despesas</a>
-          </NavigationMenuLink>
+          </Toggle>
         </NavigationMenuItem>
         <NavigationMenuItem>
-          <NavigationMenuLink asChild>
+          <Toggle>
+            <ChartSpline />
             <a href="/relatorios">Relatórios</a>
-          </NavigationMenuLink>
+          </Toggle>
         </NavigationMenuItem>
         <NavigationMenuItem>
-          <NavigationMenuLink asChild>
+          <Toggle>
+            <Users />
             <a href="/usuario">Usuários</a>
-          </NavigationMenuLink>
+          </Toggle>
         </NavigationMenuItem>
         <NavigationMenuItem>
-          <NavigationMenuTrigger>Item One</NavigationMenuTrigger>
-          <NavigationMenuContent>
-            <NavigationMenuLink>Link</NavigationMenuLink>
-          </NavigationMenuContent>
+          <Toggle>
+            <Settings />
+            <a href="/config">Configuração</a>
+          </Toggle>
         </NavigationMenuItem>
       </NavigationMenuList>
+      <ModeToggle />
     </NavigationMenu>
   );
 }

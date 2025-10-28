@@ -4,7 +4,9 @@ import React from "react";
 export default function Home() {
   return (
     <React.Fragment>
-      <Navbar />
+      <div className="w-full">
+        <Navbar />
+      </div>
     </React.Fragment>
   );
 }
